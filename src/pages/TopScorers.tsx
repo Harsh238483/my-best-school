@@ -190,11 +190,11 @@ const TopScorers = () => {
       <Navigation />
       
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 overflow-hidden">
+      <section className="relative pt-24 pb-12 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-royal/20 via-background to-gold/20"></div>
         
         {/* Floating Achievement Icons */}
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden hidden sm:block">
           <motion.div
             animate={{ 
               y: [0, -20, 0],
@@ -244,34 +244,34 @@ const TopScorers = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-16"
+            className="text-center mb-12"
           >
             <motion.div
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="inline-flex items-center space-x-3 mb-6"
+              className="inline-flex items-center space-x-2 mb-4"
             >
-              <Trophy className="h-12 w-12 text-gold animate-bounce" />
-              <h1 className="text-5xl md:text-6xl font-heading font-bold">
+              <Trophy className="h-8 w-8 sm:h-12 sm:w-12 text-gold animate-bounce" />
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-heading font-bold">
                 Top <span className="text-gradient-gold">Scorers</span>
               </h1>
-              <Trophy className="h-12 w-12 text-gold animate-bounce" style={{ animationDelay: '0.5s' }} />
+              <Trophy className="h-8 w-8 sm:h-12 sm:w-12 text-gold animate-bounce" style={{ animationDelay: '0.5s' }} />
             </motion.div>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-8">
+            <p className="text-base sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-6 px-4">
               Celebrating academic excellence and outstanding achievements of our brilliant students at Royal Academy.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 px-4">
               <Link to="/top-scorers/learn-more">
-                <Button className="bg-gradient-to-r from-gold to-yellow-500 hover:from-gold/80 hover:to-yellow-500/80 text-black px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                  <GraduationCap className="h-5 w-5 mr-2" />
+                <Button className="bg-gradient-to-r from-gold to-yellow-500 hover:from-gold/80 hover:to-yellow-500/80 text-black px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 w-full sm:w-auto">
+                  <GraduationCap className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   Learn More About Our Programs
-                  <ArrowRight className="h-5 w-5 ml-2" />
+                  <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
                 </Button>
               </Link>
               <Link to="/admissions">
-                <Button variant="outline" className="border-gold/30 text-gold hover:text-gold/80 hover:bg-gold/10 px-8 py-4 text-lg rounded-xl transition-all duration-300">
-                  <Trophy className="h-5 w-5 mr-2" />
+                <Button variant="outline" className="border-gold/30 text-gold hover:text-gold/80 hover:bg-gold/10 px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg rounded-xl transition-all duration-300 w-full sm:w-auto">
+                  <Trophy className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   Apply Now
                 </Button>
               </Link>
@@ -283,12 +283,12 @@ const TopScorers = () => {
       {/* Filters Section */}
       <section className="section-padding bg-gradient-to-r from-royal/5 via-background to-gold/5">
         <div className="container-wide">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 mb-12">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-8">
             
             {/* Category Filter */}
-            <div className="flex flex-col items-center">
-              <h3 className="text-lg font-heading font-semibold mb-4 text-gradient-gold">Filter by Subject</h3>
-              <div className="flex flex-wrap justify-center gap-3">
+            <div className="flex flex-col items-center w-full">
+              <h3 className="text-base sm:text-lg font-heading font-semibold mb-3 text-gradient-gold">Filter by Subject</h3>
+              <div className="flex flex-wrap justify-center gap-2 w-full">
                 {categories.map((category, index) => (
                   <motion.button
                     key={category.id}
@@ -298,23 +298,23 @@ const TopScorers = () => {
                     whileTap={{ scale: 0.95 }}
                     transition={{ delay: index * 0.1 }}
                     onClick={() => setSelectedCategory(category.id)}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-full font-medium transition-all duration-300 ${
+                    className={`flex items-center space-x-1 sm:space-x-2 px-3 py-2 sm:px-4 sm:py-2 rounded-full font-medium transition-all duration-300 text-xs sm:text-sm ${
                       selectedCategory === category.id
                         ? "bg-gold text-black shadow-lg"
                         : "bg-card/50 hover:bg-card text-muted-foreground hover:text-foreground border border-border"
                     }`}
                   >
-                    <category.icon className="h-4 w-4" />
-                    <span className="text-sm">{category.name}</span>
+                    <category.icon className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="truncate max-w-[100px] sm:max-w-none">{category.name}</span>
                   </motion.button>
                 ))}
               </div>
             </div>
 
             {/* Year Filter */}
-            <div className="flex flex-col items-center">
-              <h3 className="text-lg font-heading font-semibold mb-4 text-gradient-gold">Academic Year</h3>
-              <div className="flex gap-3">
+            <div className="flex flex-col items-center w-full mt-4 lg:mt-0">
+              <h3 className="text-base sm:text-lg font-heading font-semibold mb-3 text-gradient-gold">Academic Year</h3>
+              <div className="flex flex-wrap justify-center gap-2">
                 {years.map((year, index) => (
                   <motion.button
                     key={year.id}
@@ -324,7 +324,7 @@ const TopScorers = () => {
                     whileTap={{ scale: 0.95 }}
                     transition={{ delay: index * 0.1 }}
                     onClick={() => setSelectedYear(year.id)}
-                    className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                    className={`px-4 py-2 sm:px-6 sm:py-3 rounded-xl font-semibold transition-all duration-300 text-xs sm:text-sm ${
                       selectedYear === year.id
                         ? "bg-gradient-to-r from-gold to-yellow-500 text-black shadow-lg"
                         : "bg-card/50 hover:bg-card text-muted-foreground hover:text-foreground border border-border"
@@ -340,7 +340,7 @@ const TopScorers = () => {
           {/* Top Scorers Grid */}
           <motion.div
             layout
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
           >
             <AnimatePresence>
               {filteredScorers.map((scorer, index) => (
@@ -352,7 +352,7 @@ const TopScorers = () => {
                   exit={{ opacity: 0, scale: 0.8, y: -20 }}
                   whileHover={{ 
                     scale: 1.03, 
-                    y: -10,
+                    y: -5,
                     rotateY: 5
                   }}
                   transition={{ 
@@ -364,18 +364,18 @@ const TopScorers = () => {
                   className={`card-3d overflow-hidden bg-gradient-to-br ${getRankColor(scorer.rank)} backdrop-blur-sm`}
                 >
                   {/* Rank Badge */}
-                  <div className="absolute -top-3 -right-3 z-10">
+                  <div className="absolute -top-2 -right-2 z-10">
                     <motion.div
                       whileHover={{ rotate: 360, scale: 1.2 }}
                       transition={{ duration: 0.6 }}
-                      className="w-12 h-12 rounded-full bg-gradient-to-br from-background to-card border-2 border-gold flex items-center justify-center shadow-lg"
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-background to-card border-2 border-gold flex items-center justify-center shadow-lg"
                     >
                       {getRankIcon(scorer.rank)}
                     </motion.div>
                   </div>
 
                   {/* Student Photo */}
-                  <div className="relative h-48 overflow-hidden">
+                  <div className="relative h-40 sm:h-48 overflow-hidden">
                     <img 
                       src={scorer.image} 
                       alt={scorer.name}
@@ -388,35 +388,35 @@ const TopScorers = () => {
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ delay: 0.3 + index * 0.1 }}
-                      className="absolute bottom-4 right-4 bg-gold text-black px-3 py-1 rounded-full font-bold text-sm shadow-lg"
+                      className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 bg-gold text-black px-2 py-1 sm:px-3 sm:py-1 rounded-full font-bold text-xs sm:text-sm shadow-lg"
                     >
                       {scorer.score}
                     </motion.div>
                   </div>
 
                   {/* Student Info */}
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
+                  <div className="p-4 sm:p-6">
+                    <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="text-xl font-heading font-bold text-gradient-gold mb-1">
+                        <h3 className="text-lg sm:text-xl font-heading font-bold text-gradient-gold mb-1">
                           {scorer.name}
                         </h3>
-                        <p className="text-muted-foreground text-sm">{scorer.grade}</p>
+                        <p className="text-muted-foreground text-xs sm:text-sm">{scorer.grade}</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm text-muted-foreground">Rank</div>
-                        <div className="text-2xl font-bold text-gold">#{scorer.rank}</div>
+                        <div className="text-xs sm:text-sm text-muted-foreground">Rank</div>
+                        <div className="text-lg sm:text-xl font-bold text-gold">#{scorer.rank}</div>
                       </div>
                     </div>
 
-                    <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
+                    <p className="text-muted-foreground text-xs sm:text-sm mb-3 leading-relaxed">
                       {scorer.description}
                     </p>
 
                     {/* Achievements */}
-                    <div className="space-y-2 mb-4">
-                      <h4 className="text-sm font-semibold text-foreground">Key Achievements:</h4>
-                      <div className="flex flex-wrap gap-2">
+                    <div className="space-y-2 mb-3">
+                      <h4 className="text-xs sm:text-sm font-semibold text-foreground">Key Achievements:</h4>
+                      <div className="flex flex-wrap gap-1 sm:gap-2">
                         {scorer.achievements.map((achievement, idx) => (
                           <motion.span
                             key={idx}
@@ -432,16 +432,16 @@ const TopScorers = () => {
                     </div>
 
                     {/* Learn More Button */}
-                    <div className="pt-4 border-t border-border/30">
+                    <div className="pt-3 border-t border-border/30">
                       <Link to={`/student/${scorer.slug}`}>
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="w-full bg-gradient-to-r from-gold/10 to-yellow-500/10 hover:from-gold/20 hover:to-yellow-500/20 border-gold/30 text-gold hover:text-gold/80 transition-all duration-300"
+                          className="w-full bg-gradient-to-r from-gold/10 to-yellow-500/10 hover:from-gold/20 hover:to-yellow-500/20 border-gold/30 text-gold hover:text-gold/80 transition-all duration-300 text-xs sm:text-sm"
                         >
-                          <BookOpen className="h-4 w-4 mr-2" />
-                          Learn More About {scorer.name}
-                          <ArrowRight className="h-4 w-4 ml-2" />
+                          <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                          Learn More
+                          <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
                         </Button>
                       </Link>
                     </div>
@@ -456,11 +456,11 @@ const TopScorers = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-center py-16"
+              className="text-center py-12"
             >
-              <TrendingUp className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-heading font-semibold mb-2">No Results Found</h3>
-              <p className="text-muted-foreground">
+              <TrendingUp className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg sm:text-xl font-heading font-semibold mb-2">No Results Found</h3>
+              <p className="text-muted-foreground text-sm sm:text-base">
                 No top scorers found for the selected criteria. Try adjusting your filters.
               </p>
             </motion.div>

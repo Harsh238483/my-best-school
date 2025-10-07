@@ -48,6 +48,7 @@ import FacilitiesManager from "@/components/FacilitiesManager";
 import AudioMessageManager from "@/components/AudioMessageManager";
 import YearlyBookManager from "@/components/YearlyBookManager";
 import ExamRoutineManager from "@/components/ExamRoutineManager";
+import TopScorersLearnMoreManager from "@/components/TopScorersLearnMoreManager";
 import { getSupabaseData, setSupabaseData, subscribeToSupabaseChanges } from "@/lib/supabaseHelpers";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -136,7 +137,7 @@ interface TeacherRecord {
 const PrincipalDashboard = () => {
   const [principalEmail, setPrincipalEmail] = useState("");
   // Restore active section from sessionStorage on mount
-  const [activeSection, setActiveSection] = useState<"dashboard" | "teachers" | "homepage" | "courses" | "gallery" | "about" | "announcements" | "admissions" | "topscorers" | "createteacherid" | "manageteachers" | "manageteacherid" | "pricemanagement" | "timetable" | "admissionsmanager" | "branding" | "events" | "categories" | "academicsmanager" | "facilitiesmanager" | "audiomessages" | "booksmanager" | "examroutine" | "contactforms">(() => {
+  const [activeSection, setActiveSection] = useState<"dashboard" | "teachers" | "homepage" | "courses" | "gallery" | "about" | "announcements" | "admissions" | "topscorers" | "createteacherid" | "manageteachers" | "manageteacherid" | "pricemanagement" | "timetable" | "admissionsmanager" | "branding" | "events" | "categories" | "academicsmanager" | "facilitiesmanager" | "audiomessages" | "booksmanager" | "examroutine" | "contactforms" | "topscorerslearnmore">(() => {
     const saved = sessionStorage.getItem('principalActiveSection');
     return (saved as any) || "dashboard";
   });
@@ -854,7 +855,8 @@ Teacher ID: ${teacherId}`);
     { icon: Calendar, label: "Exam Routine", color: "from-cyan-500 to-cyan-600", action: () => setActiveSection("examroutine") },
     { icon: Settings, label: "Branding & Logo", color: "from-pink-500 to-pink-600", action: () => setActiveSection("branding") },
     { icon: Clock, label: "Manage Timetable", color: "from-indigo-500 to-indigo-600", action: () => setActiveSection("timetable") },
-    { icon: GraduationCap, label: "Edit Admissions Page", color: "from-teal-500 to-teal-600", action: () => setActiveSection("admissionsmanager") }
+    { icon: GraduationCap, label: "Edit Admissions Page", color: "from-teal-500 to-teal-600", action: () => setActiveSection("admissionsmanager") },
+    { icon: Trophy, label: "Top Scorers Content", color: "from-amber-500 to-amber-600", action: () => setActiveSection("topscorerslearnmore") }
   ];
 
   // Precompute filtered teachers list for Manage Teachers
@@ -4076,6 +4078,31 @@ Teacher ID: ${teacherId}`);
             </div>
           </div>
         )}
+
+          {activeSection === "topscorerslearnmore" && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mt-8"
+            >
+              <div className="bg-card/95 backdrop-blur-md rounded-xl p-6 border border-border/50">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-heading font-bold text-foreground">
+                    Top Scorers Learn More Content
+                  </h2>
+                  <Button
+                    variant="outline"
+                    onClick={() => setActiveSection("dashboard")}
+                    size="sm"
+                  >
+                    Back to Dashboard
+                  </Button>
+                </div>
+                <TopScorersLearnMoreManager />
+              </div>
+            </motion.div>
+          )}
 
         {/* Document Viewer Modal */}
         {documentViewer.show && (

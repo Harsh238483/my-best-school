@@ -13,6 +13,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   redirectTo 
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -32,6 +33,22 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [authKey]);
+
+  // Retry authentication check if it failed initially (handles temporary issues)
+  useEffect(() => {
+    if (isAuthenticated === false && retryCount < 3) {
+      const retryTimer = setTimeout(() => {
+        const authStatus = localStorage.getItem(authKey);
+        if (authStatus === "true") {
+          setIsAuthenticated(true);
+        } else {
+          setRetryCount(prev => prev + 1);
+        }
+      }, 500);
+      
+      return () => clearTimeout(retryTimer);
+    }
+  }, [isAuthenticated, retryCount, authKey]);
 
   // Show loading while checking authentication
   if (isAuthenticated === null) {

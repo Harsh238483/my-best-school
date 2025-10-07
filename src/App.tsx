@@ -630,32 +630,44 @@ function AnimatedRoutes() {
 
 const App = () => {
   // Validate any existing teacher session against principal-provisioned list
+  // Enhanced validation to prevent unnecessary logouts
   useEffect(() => {
     try {
       const teacherAuth = localStorage.getItem("teacherAuth");
       const email = (localStorage.getItem("teacherEmail") || "").trim().toLowerCase();
       const name = (localStorage.getItem("teacherName") || "").trim().toLowerCase();
 
-      if (teacherAuth === "true") {
+      // Only validate if we have authentication data
+      if (teacherAuth === "true" && (email || name)) {
         const raw = localStorage.getItem("royal-academy-auth-teachers") || "[]";
         const teachers = JSON.parse(raw);
-        const exists = (teachers || []).some((t: any) => {
-          const tEmail = ((t.email || "") + "").trim().toLowerCase();
-          const tName = ((t.username || t.name || "") + "").trim().toLowerCase();
-          const tId = ((t.teacherId || t.id || "") + "").trim().toLowerCase();
-          // Consider a session valid only if email or name matches a provisioned record
-          return (email && tEmail === email) || (name && tName === name);
-        });
+        
+        // Only perform validation if we have a populated teachers list
+        // This prevents clearing authentication when the list is temporarily empty
+        if (teachers.length > 0) {
+          const exists = (teachers || []).some((t: any) => {
+            const tEmail = ((t.email || "") + "").trim().toLowerCase();
+            const tName = ((t.username || t.name || "") + "").trim().toLowerCase();
+            // Consider a session valid only if email or name matches a provisioned record
+            return (email && tEmail === email) || (name && tName === name);
+          });
 
-        if (!exists) {
-          // Clear any stale or seeded session (e.g., old John Smith test data)
-          localStorage.removeItem("teacherAuth");
-          localStorage.removeItem("teacherEmail");
-          localStorage.removeItem("teacherName");
-          localStorage.removeItem("teacherSubject");
+          // Only clear authentication if we're certain it's invalid
+          if (!exists) {
+            // Clear any stale or seeded session (e.g., old John Smith test data)
+            localStorage.removeItem("teacherAuth");
+            localStorage.removeItem("teacherEmail");
+            localStorage.removeItem("teacherName");
+            localStorage.removeItem("teacherSubject");
+          }
         }
+        // If teachers list is empty, we don't clear authentication
+        // This preserves sessions when there might be temporary data loading issues
       }
-    } catch {}
+    } catch (error) {
+      // If there's an error parsing the teachers list, don't clear authentication
+      console.warn("Error validating teacher session, preserving authentication:", error);
+    }
   }, []);
 
   return (

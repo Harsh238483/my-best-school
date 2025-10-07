@@ -289,6 +289,7 @@ const StudentDashboard = () => {
     const currentYear = today.getFullYear();
     
     // Get all students to find current student's data
+    // Use the students data from state instead of localStorage for real-time updates
     const allStudents = JSON.parse(localStorage.getItem('royal-academy-students') || '[]');
     let currentStudent = allStudents.find((s: any) => s.email === studentData.email || s.id === studentData.id);
     
@@ -590,6 +591,15 @@ const StudentDashboard = () => {
       }
     );
     
+    // Subscribe to holiday updates
+    const unsubscribeHolidays = subscribeToSupabaseChanges(
+      'royal-academy-holidays',
+      (newHolidays: string[]) => {
+        console.log('[StudentDashboard] Holidays updated from Supabase');
+        setCustomHolidays(newHolidays);
+      }
+    );
+    
     // Subscribe to homework/assignments updates
     const unsubscribeHomework = subscribeToSupabaseChanges(
       'royal-academy-homework',
@@ -692,6 +702,7 @@ const StudentDashboard = () => {
     return () => {
       console.log('[StudentDashboard] Cleaning up real-time subscriptions');
       unsubscribeStudents();
+      unsubscribeHolidays();
       unsubscribeHomework();
       unsubscribeReports();
       unsubscribeNotifications();
@@ -714,18 +725,40 @@ const StudentDashboard = () => {
     }
   }, [studentData]);
 
+  // State for attendance stats to ensure real-time updates
+  const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, holidays: 0, percentage: 0 });
+
+  // Update attendance stats when relevant data changes
+  useEffect(() => {
+    setAttendanceStats(calculateAttendanceStats());
+  }, [studentData, customHolidays]);
+
+  // Update attendance stats when the calendar month changes
+  useEffect(() => {
+    setAttendanceStats(calculateAttendanceStats());
+  }, [currentCalendarDate]);
+
   const handleLogout = () => {
+    // Clear all student authentication data
     localStorage.removeItem("studentAuth");
     localStorage.removeItem("studentEmail");
     localStorage.removeItem("studentId");
     localStorage.removeItem("studentName");
-    navigate("/");
+    
+    // Also clear any session storage
+    sessionStorage.clear();
+    
+    // Small delay to ensure all state is cleared before redirecting
+    setTimeout(() => {
+      // Force a complete redirect to ensure clean state
+      window.location.href = "/";
+    }, 100);
   };
 
   const stats = [
     { icon: BookOpen, label: "Subjects", value: "8", change: "Active courses" },
     { icon: Trophy, label: "Grade Average", value: "85.5%", change: "+2.3% this term" },
-    { icon: Calendar, label: "Attendance", value: "94%", change: "This month" },
+    { icon: Calendar, label: "Attendance", value: `${attendanceStats.percentage}%`, change: "This month" },
     { icon: Award, label: "Assignments", value: "12/15", change: "Completed" }
   ];
 
@@ -1270,25 +1303,25 @@ const StudentDashboard = () => {
             <div className="mt-4 sm:mt-6 grid grid-cols-2 gap-3 sm:gap-4">
               <div className="bg-green-500/10 rounded-lg p-3 sm:p-4 text-center border border-green-500/30">
                 <div className="text-xl sm:text-2xl font-bold text-green-400">
-                  {studentData ? calculateAttendanceStats().present : 0}
+                  {attendanceStats.present}
                 </div>
                 <div className="text-xs sm:text-sm text-green-400">Present Days</div>
               </div>
               <div className="bg-red-500/10 rounded-lg p-3 sm:p-4 text-center border border-red-500/30">
                 <div className="text-xl sm:text-2xl font-bold text-red-400">
-                  {studentData ? calculateAttendanceStats().absent : 0}
+                  {attendanceStats.absent}
                 </div>
                 <div className="text-xs sm:text-sm text-red-400">Absent Days</div>
               </div>
               <div className="bg-blue-500/10 rounded-lg p-3 sm:p-4 text-center border border-blue-500/30">
                 <div className="text-xl sm:text-2xl font-bold text-blue-400">
-                  {studentData ? calculateAttendanceStats().holidays : 0}
+                  {attendanceStats.holidays}
                 </div>
                 <div className="text-xs sm:text-sm text-blue-400">Holidays</div>
               </div>
               <div className="bg-gold/10 rounded-lg p-3 sm:p-4 text-center border border-gold/30">
                 <div className="text-xl sm:text-2xl font-bold text-gold">
-                  {studentData ? calculateAttendanceStats().percentage : 0}%
+                  {attendanceStats.percentage}%
                 </div>
                 <div className="text-xs sm:text-sm text-gold">Attendance Rate</div>
               </div>
@@ -1436,20 +1469,7 @@ const StudentDashboard = () => {
                           Created by: {assignment.createdBy}
                         </div>
                         <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-xs h-10 w-full sm:w-auto"
-                          >
-                            Mark as Complete
-                          </Button>
-                          <Button
-                            variant="default"
-                            size="sm"
-                            className="text-xs h-10 w-full sm:w-auto bg-gradient-to-r from-gold to-yellow-500 text-black"
-                          >
-                            Submit Work
-                          </Button>
+                          {/* Removed "Mark as Complete" and "Submit Work" buttons as per user request */}
                         </div>
                       </div>
                     </motion.div>

@@ -44,7 +44,7 @@ import { Input } from "@/components/ui/input";
 // import { textarea } from "@/components/ui/textarea";
 import StudentManager from "@/components/StudentManager";
 import LiveClassroom from "@/components/LiveClassroom";
-import { setSupabaseData } from "@/lib/supabaseHelpers";
+import { setSupabaseData, subscribeToSupabaseChanges } from "@/lib/supabaseHelpers";
 
 interface Student {
   id: string;
@@ -189,6 +189,7 @@ const TeacherDashboard = () => {
   const [teacherEmail, setTeacherEmail] = useState("");
   const [teacherName, setTeacherName] = useState("");
   const [teacherSubject, setTeacherSubject] = useState("");
+  const navigate = useNavigate();
 
   // Load teacher info from localStorage on mount
   useEffect(() => {
@@ -228,7 +229,6 @@ const TeacherDashboard = () => {
   const [editingHomework, setEditingHomework] = useState<Homework | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const reportImageInputRef = useRef<HTMLInputElement>(null);
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
 
   // Student creation form state
@@ -349,16 +349,26 @@ const TeacherDashboard = () => {
   const [currentAttendance, setCurrentAttendance] = useState<{[key: string]: 'present' | 'absent' | 'late'}>({});
   const [attendanceRemarks, setAttendanceRemarks] = useState<{[key: string]: string}>({});
 
+  // Load teacher info from localStorage on mount
   useEffect(() => {
-    // Load teacher data - auth is already checked by ProtectedRoute
-    const email = localStorage.getItem("teacherEmail");
-    const name = localStorage.getItem("teacherName");
-    const subject = localStorage.getItem("teacherSubject");
+    const storedEmail = localStorage.getItem("teacherEmail") || "";
+    const storedName = localStorage.getItem("teacherName") || "";
+    const storedSubject = localStorage.getItem("teacherSubject") || "";
 
-    if (email) setTeacherEmail(email);
-    if (name) setTeacherName(name);
-    if (subject) setTeacherSubject(subject);
-    // Load data from localStorage
+    setTeacherEmail(storedEmail);
+    setTeacherName(storedName);
+    setTeacherSubject(storedSubject);
+
+    // Set up real-time subscription for holidays
+    const unsubscribeHolidays = subscribeToSupabaseChanges(
+      'royal-academy-holidays',
+      (newHolidays: string[]) => {
+        console.log('[TeacherDashboard] Holidays updated from Supabase');
+        setHolidays(newHolidays);
+      }
+    );
+
+    // Load students from localStorage
     const storedStudents = localStorage.getItem('royal-academy-students');
     if (storedStudents) {
       setStudents(JSON.parse(storedStudents));
@@ -419,6 +429,11 @@ const TeacherDashboard = () => {
       const mySentNotifications = allStudentNotifications.filter((n: any) => n.senderId === teacherEmail);
       setSentStudentNotifications(mySentNotifications);
     }
+
+    // Cleanup function to unsubscribe when component unmounts
+    return () => {
+      unsubscribeHolidays();
+    };
   }, [navigate, teacherEmail]);
 
   const saveData = () => {
@@ -427,11 +442,20 @@ const TeacherDashboard = () => {
     localStorage.setItem('royal-academy-attendance', JSON.stringify(attendanceRecords));
   };
   const handleLogout = () => {
+    // Clear all teacher authentication data
     localStorage.removeItem("teacherAuth");
     localStorage.removeItem("teacherEmail");
     localStorage.removeItem("teacherName");
     localStorage.removeItem("teacherSubject");
-    navigate("/teacher");
+    
+    // Also clear any session storage
+    sessionStorage.clear();
+    
+    // Small delay to ensure all state is cleared before redirecting
+    setTimeout(() => {
+      // Force a complete redirect to ensure clean state
+      window.location.href = "/teacher";
+    }, 100);
   };
 
   // Image upload handler
@@ -2792,11 +2816,14 @@ Student ID: ${studentId}`);
                       className="flex-1 p-2 sm:p-3 border border-border rounded-lg bg-background text-sm"
                     />
                     <Button
-                      onClick={() => {
+                      onClick={async () => {
                         if (newHoliday && !holidays.includes(newHoliday)) {
                           const updatedHolidays = [...holidays, newHoliday];
                           setHolidays(updatedHolidays);
+                          // Save to localStorage first
                           localStorage.setItem('royal-academy-holidays', JSON.stringify(updatedHolidays));
+                          // Then sync to Supabase for real-time updates
+                          await setSupabaseData('royal-academy-holidays', updatedHolidays);
                           setNewHoliday('');
                           alert('Holiday added successfully!');
                         }
@@ -2825,10 +2852,13 @@ Student ID: ${studentId}`);
                             <Button
                               variant="destructive"
                               size="sm"
-                              onClick={() => {
+                              onClick={async () => {
                                 const updatedHolidays = holidays.filter((_, i) => i !== index);
                                 setHolidays(updatedHolidays);
+                                // Save to localStorage first
                                 localStorage.setItem('royal-academy-holidays', JSON.stringify(updatedHolidays));
+                                // Then sync to Supabase for real-time updates
+                                await setSupabaseData('royal-academy-holidays', updatedHolidays);
                                 alert('Holiday removed successfully!');
                               }}
                               className="text-xs h-7 px-2 sm:h-8 sm:px-3 flex-shrink-0"
