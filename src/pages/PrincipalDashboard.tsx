@@ -159,6 +159,7 @@ const PrincipalDashboard = () => {
   const [admissionStatus, setAdmissionStatus] = useState(true); // true = ON, false = OFF
   const [contactForms, setContactForms] = useState<any[]>([]);
   const [contactFormsSearch, setContactFormsSearch] = useState("");
+  const [selectedContactForms, setSelectedContactForms] = useState<string[]>([]); // Add this line
   const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ show: boolean; admissionId: string | null; studentName: string }>({ show: false, admissionId: null, studentName: '' });
   const [neverAskAgain, setNeverAskAgain] = useState(false);
   const [documentViewer, setDocumentViewer] = useState<{ show: boolean; url: string; name: string }>({ show: false, url: '', name: '' });
@@ -515,6 +516,41 @@ Teacher ID: ${teacherId}`);
       await handleDeleteAdmission(deleteConfirmModal.admissionId);
       setDeleteConfirmModal({ show: false, admissionId: null, studentName: '' });
       setNeverAskAgain(false);
+    }
+  };
+
+  // Delete contact form
+  const handleDeleteContactForm = async (formId: string) => {
+    try {
+      const updated = contactForms.filter(f => f.id !== formId);
+      setContactForms(updated);
+      await setSupabaseData('royal-academy-contact-forms', updated);
+      // Also remove from selected forms if it was selected
+      setSelectedContactForms(selectedContactForms.filter(id => id !== formId));
+      alert('Contact form deleted successfully!');
+    } catch (error) {
+      console.error('[PrincipalDashboard] Error deleting contact form:', error);
+      alert('Failed to delete contact form');
+    }
+  };
+
+  // Delete selected contact forms
+  const handleDeleteSelectedContactForms = async () => {
+    if (selectedContactForms.length === 0) return;
+    
+    if (!window.confirm(`Are you sure you want to delete ${selectedContactForms.length} contact form(s)?`)) {
+      return;
+    }
+
+    try {
+      const updated = contactForms.filter(f => !selectedContactForms.includes(f.id));
+      setContactForms(updated);
+      await setSupabaseData('royal-academy-contact-forms', updated);
+      setSelectedContactForms([]); // Clear selection
+      alert(`${selectedContactForms.length} contact form(s) deleted successfully!`);
+    } catch (error) {
+      console.error('[PrincipalDashboard] Error deleting selected contact forms:', error);
+      alert('Failed to delete selected contact forms');
     }
   };
 
@@ -3202,15 +3238,43 @@ Teacher ID: ${teacherId}`);
                   </Button>
                 </div>
                 
-                {/* Search Bar */}
-                <div className="relative mb-6">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search contact forms by name, email, phone..."
-                    value={contactFormsSearch}
-                    onChange={(e) => setContactFormsSearch(e.target.value)}
-                    className="pl-10"
-                  />
+                {/* Search Bar and Actions */}
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search contact forms by name, email, phone..."
+                      value={contactFormsSearch}
+                      onChange={(e) => setContactFormsSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  
+                  {/* Select All and Delete Buttons */}
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        // Select all contact forms
+                        const allFormIds = contactForms.map(form => form.id);
+                        setSelectedContactForms(allFormIds);
+                      }}
+                      className="text-xs sm:text-sm"
+                    >
+                      Select All
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteSelectedContactForms}
+                      disabled={selectedContactForms.length === 0}
+                      className="text-xs sm:text-sm"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Delete Selected ({selectedContactForms.length})
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Contact Forms Table */}
@@ -3219,12 +3283,45 @@ Teacher ID: ${teacherId}`);
                     <table className="w-full">
                       <thead className="bg-muted/50">
                         <tr>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Name</th>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Class</th>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Phone</th>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Email</th>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Submitted</th>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Status</th>
+                          <th className="px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-medium text-muted-foreground">
+                            <input
+                              type="checkbox"
+                              checked={selectedContactForms.length > 0 && selectedContactForms.length === contactForms.filter(form => {
+                                const search = contactFormsSearch.toLowerCase();
+                                return !search || 
+                                  form.name?.toLowerCase().includes(search) ||
+                                  form.email?.toLowerCase().includes(search) ||
+                                  form.phone?.toLowerCase().includes(search) ||
+                                  form.class?.toLowerCase().includes(search);
+                              }).length}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  // Select all visible forms
+                                  const visibleFormIds = contactForms
+                                    .filter(form => {
+                                      const search = contactFormsSearch.toLowerCase();
+                                      return !search || 
+                                        form.name?.toLowerCase().includes(search) ||
+                                        form.email?.toLowerCase().includes(search) ||
+                                        form.phone?.toLowerCase().includes(search) ||
+                                        form.class?.toLowerCase().includes(search);
+                                    })
+                                    .map(form => form.id);
+                                  setSelectedContactForms(visibleFormIds);
+                                } else {
+                                  setSelectedContactForms([]);
+                                }
+                              }}
+                              className="h-4 w-4 rounded border-border"
+                            />
+                          </th>
+                          <th className="px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-medium text-muted-foreground">Name</th>
+                          <th className="px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-medium text-muted-foreground">Class</th>
+                          <th className="px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-medium text-muted-foreground">Phone</th>
+                          <th className="px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-medium text-muted-foreground">Email</th>
+                          <th className="px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-medium text-muted-foreground">Submitted</th>
+                          <th className="px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-medium text-muted-foreground">Status</th>
+                          <th className="px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-medium text-muted-foreground">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
@@ -3239,15 +3336,29 @@ Teacher ID: ${teacherId}`);
                           })
                           .map((form) => (
                             <tr key={form.id} className="hover:bg-muted/30 transition-colors">
-                              <td className="px-4 py-3 text-sm text-foreground font-medium">
+                              <td className="px-2 sm:px-4 py-3">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedContactForms.includes(form.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedContactForms([...selectedContactForms, form.id]);
+                                    } else {
+                                      setSelectedContactForms(selectedContactForms.filter(id => id !== form.id));
+                                    }
+                                  }}
+                                  className="h-4 w-4 rounded border-border"
+                                />
+                              </td>
+                              <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-foreground font-medium">
                                 {form.name || 'N/A'}
                               </td>
-                              <td className="px-4 py-3 text-sm text-muted-foreground">
+                              <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-muted-foreground">
                                 {form.class || 'Not specified'}
                               </td>
-                              <td className="px-4 py-3 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-2">
-                                  <span>{form.phone || 'N/A'}</span>
+                              <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1 sm:gap-2">
+                                  <span className="truncate max-w-[80px] sm:max-w-none">{form.phone || 'N/A'}</span>
                                   {form.phone && (
                                     <button 
                                       onClick={() => {
@@ -3257,14 +3368,14 @@ Teacher ID: ${teacherId}`);
                                       className="p-1 rounded hover:bg-muted transition-colors"
                                       title="Copy phone number"
                                     >
-                                      <Copy className="h-4 w-4 text-muted-foreground" />
+                                      <Copy className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                                     </button>
                                   )}
                                 </div>
                               </td>
-                              <td className="px-4 py-3 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-2">
-                                  <span>{form.email || 'N/A'}</span>
+                              <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1 sm:gap-2">
+                                  <span className="truncate max-w-[80px] sm:max-w-none">{form.email || 'N/A'}</span>
                                   {form.email && (
                                     <button 
                                       onClick={() => {
@@ -3274,15 +3385,15 @@ Teacher ID: ${teacherId}`);
                                       className="p-1 rounded hover:bg-muted transition-colors"
                                       title="Copy email address"
                                     >
-                                      <Copy className="h-4 w-4 text-muted-foreground" />
+                                      <Copy className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                                     </button>
                                   )}
                                 </div>
                               </td>
-                              <td className="px-4 py-3 text-sm text-muted-foreground">
+                              <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-muted-foreground">
                                 {form.submittedAt ? new Date(form.submittedAt).toLocaleDateString() : 'Unknown'}
                               </td>
-                              <td className="px-4 py-3">
+                              <td className="px-2 sm:px-4 py-3">
                                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                   form.status === 'new' 
                                     ? 'bg-green-100 text-green-800 border border-green-200'
@@ -3291,12 +3402,24 @@ Teacher ID: ${teacherId}`);
                                   {form.status === 'new' ? 'New' : 'Processed'}
                                 </span>
                               </td>
+                              <td className="px-2 sm:px-4 py-3">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteContactForm(form.id)}
+                                  className="h-7 px-2 text-xs bg-red-500/10 hover:bg-red-500/20 text-red-600"
+                                  title="Delete Contact Form"
+                                >
+                                  <X className="h-3 w-3 sm:h-4 sm:w-4" />
+                                  <span className="sr-only">Delete</span>
+                                </Button>
+                              </td>
                             </tr>
                           ))
                         }
                         {contactForms.length === 0 && (
                           <tr>
-                            <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                            <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
                               <div className="flex flex-col items-center space-y-3">
                                 <Mail className="h-12 w-12 text-muted-foreground/50" />
                                 <div>
