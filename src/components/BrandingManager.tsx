@@ -1,311 +1,236 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Upload, Image as ImageIcon, Save, RefreshCw, Palette, Type } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button-variants";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { getSupabaseData, setSupabaseData } from '@/lib/supabaseHelpers';
-
-interface BrandingData {
-  schoolName: string;
-  tagline: string;
-  logoUrl: string;
-  faviconUrl: string;
-  primaryColor: string;
-  secondaryColor: string;
-  accentColor: string;
-  contactEmail: string;
-  contactPhone: string;
-  address: string;
-}
+import { getSupabaseData, setSupabaseData } from "@/lib/supabaseHelpers";
+import { motion } from "framer-motion";
 
 const BrandingManager = () => {
-  const [branding, setBranding] = useState<BrandingData>({
+  const [brandingData, setBrandingData] = useState({
     schoolName: "Royal Academy",
-    tagline: "Excellence in Education",
-    logoUrl: "",
-    faviconUrl: "",
-    primaryColor: "#1e40af",
-    secondaryColor: "#f59e0b",
-    accentColor: "#10b981",
-    contactEmail: "info@royalacademy.edu",
-    contactPhone: "+1 (555) 123-4567",
-    address: "123 Education Street, Knowledge City, ED 12345"
+    tagline: "Preparing minds for the future",
+    logoUrl: "/placeholder.svg"
   });
+  
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  const [message, setMessage] = useState("");
-
+  // Load current branding data
   useEffect(() => {
-    const fetchBranding = async () => {
+    const loadBrandingData = async () => {
       try {
-        const brandingData = await getSupabaseData<BrandingData>('royal-academy-branding', {
+        const data = await getSupabaseData('royal-academy-branding', {
           schoolName: "Royal Academy",
-          tagline: "Excellence in Education",
-          logoUrl: "",
-          faviconUrl: "",
-          primaryColor: "#1e40af",
-          secondaryColor: "#f59e0b",
-          accentColor: "#10b981",
-          contactEmail: "info@royalacademy.edu",
-          contactPhone: "+1 (555) 123-4567",
-          address: "123 Education Street, Knowledge City, ED 12345"
+          tagline: "Preparing minds for the future",
+          logoUrl: "/placeholder.svg"
         });
-
-        setBranding(brandingData);
-      } catch (error: any) {
-        console.error('[BrandingManager] Error fetching branding:', error);
+        
+        setBrandingData({
+          schoolName: data.schoolName || "Royal Academy",
+          tagline: data.tagline || "Preparing minds for the future",
+          logoUrl: data.logoUrl || "/placeholder.svg"
+        });
+      } catch (error) {
+        console.error("Error loading branding data:", error);
       }
     };
-
-    fetchBranding();
+    
+    loadBrandingData();
   }, []);
 
-  const saveBranding = async () => {
-    try {
-      // Save to Supabase (which also saves to localStorage)
-      const success = await setSupabaseData('royal-academy-branding', branding);
-
-      if (success) {
-        setMessage("✅ Branding updated successfully! Changes will appear across all pages.");
-      } else {
-        setMessage("⚠️ Branding saved locally but Supabase sync had issues. Changes will still work.");
-      }
-
-      // Update document title immediately for preview
-      document.title = `${branding.schoolName} - ${branding.tagline}`;
-
-      // Trigger a page reload after 2 seconds to show changes
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-    } catch (error: any) {
-      console.error('[BrandingManager] Error saving branding:', error);
-      setMessage(`❌ Error saving branding: ${error.message}`);
-    }
-
-    setTimeout(() => setMessage(""), 5000);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setBrandingData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const updateField = (field: keyof BrandingData, value: string) => {
-    setBranding(prev => ({ ...prev, [field]: value }));
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setSuccess(false);
+    
+    try {
+      await setSupabaseData('royal-academy-branding', brandingData);
+      setSuccess(true);
+      
+      // Update all components that use branding data
+      window.dispatchEvent(new CustomEvent('branding-updated'));
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (error) {
+      console.error("Error saving branding data:", error);
+      alert("Failed to save branding data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-heading font-bold text-foreground mb-2">
-          Branding & Logo Management
-        </h2>
+        <h2 className="text-2xl font-heading font-bold text-foreground mb-2">School Branding</h2>
         <p className="text-muted-foreground">
-          Update your school's navigation logo (top-left corner), colors, and branding information
+          Customize your school's name, tagline, and logo across the entire website.
         </p>
       </div>
 
-      {message && (
-        <Alert>
-          <AlertDescription>{message}</AlertDescription>
-        </Alert>
-      )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Branding Form */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
+          className="bg-card/95 backdrop-blur-md rounded-xl p-6 border border-border/50"
+        >
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="schoolName" className="text-foreground">
+                School Name
+              </Label>
+              <Input
+                id="schoolName"
+                name="schoolName"
+                value={brandingData.schoolName}
+                onChange={handleInputChange}
+                placeholder="Enter your school name"
+                className="bg-background border-border"
+              />
+            </div>
 
-      {/* Logo Upload Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="bg-card border border-border rounded-lg p-6"
-      >
-        <div className="flex items-center space-x-3 mb-4">
-          <ImageIcon className="h-5 w-5 text-gold" />
-          <h3 className="text-lg font-semibold">Navigation Logo (Top-Left Corner)</h3>
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="tagline" className="text-foreground">
+                Tagline
+              </Label>
+              <Textarea
+                id="tagline"
+                name="tagline"
+                value={brandingData.tagline}
+                onChange={handleInputChange}
+                placeholder="Enter your school tagline"
+                rows={3}
+                className="bg-background border-border"
+              />
+            </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">Current Logo</label>
-            {branding.logoUrl ? (
-              <div className="flex items-center space-x-4">
-                <img 
-                  src={branding.logoUrl} 
-                  alt="School Logo" 
-                  className="h-16 w-16 object-contain border border-border rounded"
-                />
-                <Button
-                  variant="outline"
-                  onClick={() => updateField('logoUrl', '')}
-                  className="text-red-500 hover:text-red-600"
+            <div className="space-y-2">
+              <Label htmlFor="logoUrl" className="text-foreground">
+                Logo URL
+              </Label>
+              <Input
+                id="logoUrl"
+                name="logoUrl"
+                value={brandingData.logoUrl}
+                onChange={handleInputChange}
+                placeholder="Enter logo image URL"
+                className="bg-background border-border"
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter a direct URL to your logo image (PNG, JPG, SVG). For best results, use a square image.
+              </p>
+            </div>
+
+            <div className="pt-4">
+              <Button 
+                type="submit" 
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-gold to-yellow-500 text-black font-bold hover:from-gold/90 hover:to-yellow-500/90"
+              >
+                {loading ? "Saving..." : "Save Branding"}
+              </Button>
+              
+              {success && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg text-green-600 text-center"
                 >
-                  Remove Logo
-                </Button>
+                  Branding updated successfully!
+                </motion.div>
+              )}
+            </div>
+          </form>
+        </motion.div>
+
+        {/* Preview Section */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="space-y-6"
+        >
+          <div className="bg-card/95 backdrop-blur-md rounded-xl p-6 border border-border/50">
+            <h3 className="text-lg font-heading font-bold text-foreground mb-4">Preview</h3>
+            
+            <div className="space-y-6">
+              {/* Navigation Preview */}
+              <div className="bg-muted/20 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-gold to-yellow-500 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="font-heading font-bold text-gradient-gold">
+                        {brandingData.schoolName}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {brandingData.tagline}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No logo uploaded</p>
-            )}
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Upload New Logo</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const reader = new FileReader();
-                  reader.onload = (event) => {
-                    updateField('logoUrl', event.target?.result as string);
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }}
-              className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gold file:text-black hover:file:bg-gold/80"
-            />
-            <p className="text-xs text-muted-foreground mt-2">
-              This logo will appear in the top-left corner of the navigation bar
-            </p>
-          </div>
-        </div>
-      </motion.div>
+              {/* Loading Screen Preview */}
+              <div className="bg-muted/20 rounded-lg p-6 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 relative">
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-gold to-yellow-500 opacity-20"></div>
+                  <div className="absolute inset-1 rounded-full bg-gradient-to-r from-gold to-yellow-500 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  </div>
+                </div>
+                <h3 className="text-xl font-heading font-bold text-gradient-gold mb-1">
+                  {brandingData.schoolName}
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  {brandingData.tagline}
+                </p>
+                <div className="h-1 bg-gradient-to-r from-gold to-yellow-500 mt-4 rounded-full w-3/4 mx-auto"></div>
+              </div>
 
-      {/* School Information */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="bg-card border border-border rounded-lg p-6"
-      >
-        <div className="flex items-center space-x-3 mb-4">
-          <Type className="h-5 w-5 text-gold" />
-          <h3 className="text-lg font-semibold">School Information</h3>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">School Name</label>
-            <Input
-              value={branding.schoolName}
-              onChange={(e) => updateField('schoolName', e.target.value)}
-              placeholder="Royal Academy"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Tagline</label>
-            <Input
-              value={branding.tagline}
-              onChange={(e) => updateField('tagline', e.target.value)}
-              placeholder="Excellence in Education"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Contact Email</label>
-            <Input
-              type="email"
-              value={branding.contactEmail}
-              onChange={(e) => updateField('contactEmail', e.target.value)}
-              placeholder="info@royalacademy.edu"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Contact Phone</label>
-            <Input
-              type="tel"
-              value={branding.contactPhone}
-              onChange={(e) => updateField('contactPhone', e.target.value)}
-              placeholder="+1 (555) 123-4567"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium mb-2">Address</label>
-            <Textarea
-              value={branding.address}
-              onChange={(e) => updateField('address', e.target.value)}
-              placeholder="123 Education Street, Knowledge City, ED 12345"
-              rows={2}
-            />
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Color Scheme */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="bg-card border border-border rounded-lg p-6"
-      >
-        <div className="flex items-center space-x-3 mb-4">
-          <Palette className="h-5 w-5 text-gold" />
-          <h3 className="text-lg font-semibold">Brand Colors</h3>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">Primary Color</label>
-            <div className="flex items-center space-x-2">
-              <input
-                type="color"
-                value={branding.primaryColor}
-                onChange={(e) => updateField('primaryColor', e.target.value)}
-                className="w-12 h-10 rounded border border-border cursor-pointer"
-              />
-              <Input
-                value={branding.primaryColor}
-                onChange={(e) => updateField('primaryColor', e.target.value)}
-                placeholder="#1e40af"
-              />
+              {/* Footer Preview */}
+              <div className="bg-muted/20 rounded-lg p-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-gold to-yellow-500 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="font-heading font-bold text-gradient-gold text-sm">
+                      {brandingData.schoolName}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {brandingData.tagline}
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Nurturing minds, shaping futures. For over 148 years, {brandingData.schoolName} has been 
+                  committed to providing world-class education.
+                </p>
+              </div>
             </div>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Secondary Color</label>
-            <div className="flex items-center space-x-2">
-              <input
-                type="color"
-                value={branding.secondaryColor}
-                onChange={(e) => updateField('secondaryColor', e.target.value)}
-                className="w-12 h-10 rounded border border-border cursor-pointer"
-              />
-              <Input
-                value={branding.secondaryColor}
-                onChange={(e) => updateField('secondaryColor', e.target.value)}
-                placeholder="#f59e0b"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Accent Color</label>
-            <div className="flex items-center space-x-2">
-              <input
-                type="color"
-                value={branding.accentColor}
-                onChange={(e) => updateField('accentColor', e.target.value)}
-                className="w-12 h-10 rounded border border-border cursor-pointer"
-              />
-              <Input
-                value={branding.accentColor}
-                onChange={(e) => updateField('accentColor', e.target.value)}
-                placeholder="#10b981"
-              />
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Save Button */}
-      <div className="flex justify-end space-x-3">
-        <Button variant="outline" onClick={() => window.location.reload()}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Preview Changes
-        </Button>
-        <Button onClick={saveBranding} className="bg-gradient-to-r from-royal to-gold text-white">
-          <Save className="h-4 w-4 mr-2" />
-          Save Branding
-        </Button>
+        </motion.div>
       </div>
     </div>
   );
